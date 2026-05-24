@@ -1,1 +1,1 @@
-In order for this application to work locally in your system you should have Ghostscript installed : https://ghostscript.com/releases/gsdnld.html ,from here download Ghostscript AGPL Release based on the type of os you are using it workd in all.
+In order for this application to work locally in your system you should have Ghostscript installed : https://ghostscript.com/releases/gsdnld.html ,from here download Ghostscript AGPL Release based on the type of os you are using.
