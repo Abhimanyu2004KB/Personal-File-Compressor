@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhimanyu's Compressor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Light Theme (Default) */
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #0ea5e9;
+            --bg-color: #f8fafc;
+            --surface: rgba(255, 255, 255, 0.75);
+            --surface-solid: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --drop-bg: rgba(238, 242, 255, 0.5);
+            --drop-border: #a5b4fc;
+            --blob-1: rgba(79, 70, 229, 0.4);
+            --blob-2: rgba(14, 165, 233, 0.3);
+        }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --surface: rgba(30, 41, 59, 0.75);
+            --surface-solid: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --drop-bg: rgba(15, 23, 42, 0.5);
+            --drop-border: #4f46e5;
+            --blob-1: rgba(79, 70, 229, 0.2);
+            --blob-2: rgba(14, 165, 233, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Modern Background Blobs */
+        .bg-blob {
+            position: absolute;
+            filter: blur(90px);
+            z-index: -1;
+            border-radius: 50%;
+            transition: background 0.5s ease;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: var(--blob-1); }
+        .blob-2 { bottom: -10%; right: -5%; width: 600px; height: 600px; background: var(--blob-2); }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand span { color: var(--primary); }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            background: var(--surface-solid);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Main Layout */
+        .hero-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: calc(100vh - 85px);
+            padding: 40px 5%;
+            gap: 60px;
+        }
+
+        .hero-text { flex: 1; }
+
+        .badge {
+            display: inline-block;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .hero-text p.desc {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .feature-list { list-style: none; }
+
+        .feature-list li {
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .feature-list li i {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            padding: 6px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+        }
+
+        /* Tool Container (The Box) */
+        .tool-container {
+            flex: 1;
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* Updated Drop Zone with Button Outline */
+        .drop-zone {
+            border: 2px dashed var(--drop-border);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            background-color: var(--drop-bg);
+            margin-bottom: 24px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .drop-zone-text {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        /* The new outlined Browse button */
+        .browse-btn {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 10px 24px;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: transparent;
+            pointer-events: none; /* Let the click pass through to the drop-zone */
+        }
+
+        .drop-zone:hover .browse-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        #fileInput { display: none; }
+
+        .controls {
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .file-info {
+            background: var(--surface-solid);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .file-name {
+            font-weight: 600;
+            max-width: 70%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .slider-container {
+            margin-bottom: 24px;
+            background: var(--surface-solid);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .slider-container label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--primary);
+            height: 6px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .live-preview {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .live-preview span.value {
+            font-weight: 800;
+            color: #10b981;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #downloadSection {
+            display: none;
+            margin-top: 15px;
+            animation: slideUp 0.4s ease;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 992px) {
+            .hero-section {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 40px;
+            }
+            .feature-list li { justify-content: center; }
+            .hero-text h1 { font-size: 2.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Decorations -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-compress" style="color: var(--primary);"></i>
+            ABHIMANYU'S <span>FILE COMPRESSER</span>
+        </div>
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="hero-section">
+        
+        <div class="hero-text">
+            <div class="badge"><i class="fa-solid fa-shield-halved"></i> 100% Local & Secure</div>
+            <h1>Shrink your files.<br>Keep the quality.</h1>
+            <p class="desc">
+                Reduce the size of your PDFs and images instantly. Everything runs directly on your machine—no uploads to random servers, no privacy risks.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fa-solid fa-check"></i> <strong>Lightning Fast:</strong> Instant image processing in browser</li>
+                <li><i class="fa-solid fa-check"></i> <strong>Total Privacy:</strong> Files never leave your computer</li>
+                <li><i class="fa-solid fa-check"></i> <strong>Smart Engine:</strong> Up to 90% size reduction with Ghostscript</li>
+            </ul>
+        </div>
+
+        <div class="tool-container">
+            <div class="drop-zone" id="dropZone">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <p class="drop-zone-text">Drag & drop your file here</p>
+                <div class="browse-btn">Browse Files</div>
+                <input type="file" id="fileInput" accept="image/jpeg, image/png, image/webp, application/pdf">
+            </div>
+
+            <div class="controls" id="controls">
+                <div class="file-info">
+                    <span class="file-name" id="fileName">filename.jpg</span>
+                    <span id="fileSize" style="color: var(--text-muted); font-weight: 500;">2.5 MB</span>
+                </div>
+
+                <div class="slider-container">
+                    <label for="qualitySlider">
+                        <span>Compression Level</span>
+                        <span id="qualityValue">80%</span>
+                    </label>
+                    <input type="range" id="qualitySlider" min="10" max="100" value="80">
+                    
+                    <div class="live-preview">
+                        <span style="color: var(--text-muted);">Expected Size:</span>
+                        <span class="value" id="liveSize">Calculating...</span>
+                    </div>
+                </div>
+
+                <button class="btn" id="compressBtn"><i class="fa-solid fa-compress"></i> Compress File</button>
+            </div>
+
+            <div id="downloadSection">
+                <button class="btn btn-success" id="downloadBtn"><i class="fa-solid fa-download"></i> Download File</button>
+            </div>
+        </div>
+
+    </main>
+
+<script>
+    // --- Theme Switcher Logic ---
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const themeIcon = themeToggleBtn.querySelector('i');
+    
+    // Check local storage or system preference
+    const savedTheme = localStorage.getItem('theme') || 
+                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+        if(theme === 'dark') {
+            themeIcon.className = 'fa-solid fa-sun';
+        } else {
+            themeIcon.className = 'fa-solid fa-moon';
+        }
+    }
+
+    // --- Compressor Logic ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const controls = document.getElementById('controls');
+    const fileNameDisplay = document.getElementById('fileName');
+    const fileSizeDisplay = document.getElementById('fileSize');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityValue = document.getElementById('qualityValue');
+    const compressBtn = document.getElementById('compressBtn');
+    const downloadSection = document.getElementById('downloadSection');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const liveSizeDisplay = document.getElementById('liveSize');
+
+    let currentFile = null;
+    let compressedBlob = null;
+    let previewTimeout = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    qualitySlider.addEventListener('input', (e) => {
+        qualityValue.textContent = e.target.value + '%';
+        downloadSection.style.display = 'none';
+        compressBtn.style.display = 'block';
+        compressBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Compress File';
+        compressBtn.disabled = false;
+        liveSizeDisplay.textContent = 'Calculating...';
+        liveSizeDisplay.style.color = 'var(--text-muted)';
+
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(() => {
+            calculateExpectedSize();
+        }, 300);
+    });
+
+    function handleFile(file) {
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please upload a valid Image (JPG, PNG, WEBP) or PDF file.');
+            return;
+        }
+
+        currentFile = file;
+        fileNameDisplay.textContent = file.name;
+        fileSizeDisplay.textContent = formatBytes(file.size);
+        
+        qualitySlider.value = 80;
+        qualityValue.textContent = '80%';
+        controls.style.display = 'block';
+        downloadSection.style.display = 'none';
+        compressBtn.style.display = 'block';
+        compressBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Compress File';
+        compressBtn.disabled = false;
+        
+        calculateExpectedSize();
+    }
+
+    function calculateExpectedSize() {
+        if (!currentFile) return;
+        const quality = qualitySlider.value / 100;
+
+        if (currentFile.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    canvas.toBlob((blob) => {
+                        compressedBlob = blob;
+                        liveSizeDisplay.textContent = formatBytes(blob.size);
+                        liveSizeDisplay.style.color = '#10b981';
+                    }, currentFile.type === 'image/png' ? 'image/jpeg' : currentFile.type, quality);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(currentFile);
+        } else {
+            let ratio = 1.0;
+            if (qualitySlider.value < 40) ratio = 0.3;
+            else if (qualitySlider.value < 80) ratio = 0.6;
+            else ratio = 0.9;
+            
+            const estimatedBytes = currentFile.size * ratio;
+            liveSizeDisplay.textContent = "~ " + formatBytes(estimatedBytes);
+            liveSizeDisplay.style.color = '#10b981';
+        }
+    }
+
+    compressBtn.addEventListener('click', () => {
+        if (!currentFile) return;
+
+        if (currentFile.type.startsWith('image/')) {
+            compressBtn.style.display = 'none';
+            downloadSection.style.display = 'block';
+        } else if (currentFile.type === 'application/pdf') {
+            
+            compressBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Compressing...';
+            compressBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('quality', qualitySlider.value);
+
+            fetch('/compress-pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Compression failed");
+                return response.blob();
+            })
+            .then(blob => {
+                compressedBlob = blob;
+                liveSizeDisplay.textContent = formatBytes(blob.size) + " (Final)";
+                compressBtn.style.display = 'none';
+                downloadSection.style.display = 'block';
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Server error. Please ensure app.py is running.");
+                compressBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Compress File';
+                compressBtn.disabled = false;
+            });
+        }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        if (!compressedBlob) return;
+        
+        const url = URL.createObjectURL(compressedBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        const originalNameParts = currentFile.name.split('.');
+        const ext = originalNameParts.length > 1 ? originalNameParts.pop() : '';
+        const nameBase = originalNameParts.join('.') || currentFile.name;
+        
+        const finalExt = currentFile.type === 'image/png' ? 'jpg' : ext;
+        a.download = nameBase + '-compressed.' + finalExt;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+    });
+
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+</script>
+
+</body>
+</html>
